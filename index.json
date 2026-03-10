@@ -5,18 +5,7 @@
       "description": "Professional white-box code security audit skill with 55+ vulnerability types, dual-track audit model, and multi-agent deep analysis",
       "files": [
         "SKILL.md",
-        "agent.md",
-        "README.md",
-        "README_CN.md",
-        "references/core/*",
-        "references/checklists/*",
-        "references/languages/*",
-        "references/security/*",
-        "references/frameworks/*",
-        "references/adapters/*",
-        "references/wooyun/*",
-        "references/cases/*",
-        "references/reporting/*"
+        "agent.md"
       ]
     }
   ]
