@@ -45,15 +45,18 @@ description: 代码安全审计任务技能
 ! 输出语言：如果用户使用中文则使用中文输出，否则自行决定
 ! 如果输出目录已存在，询问用户需要重命名以备份该目录或是直接删除（默认操作：备份）
 ! 输出的任何文件都要在设定的输出目录下
+! 不允许变更工作目录，当需要输出临时测试内容时，可以临时创建 `<输出目录>/tmp` 临时目录进行操作
 
 ### Step2 扫描队列初始化
 
-为了保证扫描任务的有序进行，必须通过队列脚本 queue.sh 生成待审计队列
+为了保证扫描任务的有序进行，必须通过队列脚本 scripts/queue.sh 生成待审计队列
 
 - 当用户指定扫描目录时，使用 init 创建队列
 - 当用户指定要扫描的文件时，使用 push 创建队列
+- 当用户指定要扫描的分支、commit时，灵活使用 push 创建队列
 
 ! 注意执行脚本时，使用 **绝对路径** 执行，不要 **cd改变工作目录**
+! 如果在windows环境下，没有bash时，使用`scripts/`目录下的**预构建版本**作为替代
 
 工具原理：
 
@@ -66,24 +69,24 @@ description: 代码安全审计任务技能
 
 ```bash
 # 初始化待审计队列
-bash "<本SKILL目录>"/queue.sh init <scandir>
+bash "<本SKILL目录>"/scripts/queue.sh init <scandir>
 
 # 直接指定需要扫描的路径（自动创建队列，指定目录时自动递归目录下所有文件，指定文件时可以指定行号范围）
 
-bash "<本SKILL目录>"/queue.sh push <path1> [<path2> <path3>:<start_line>:<line_num> ...]
+bash "<本SKILL目录>"/scripts/queue.sh push <path1> [<path2> <path3>:<start_line>:<line_num> ...]
 
 # 通过指定 git diff 参数生成变更块队列
 
-bash "<本SKILL目录>"/queue.sh diff [git diff 参数...]
+bash "<本SKILL目录>"/scripts/queue.sh diff [git diff 参数...]
 
 # 查看队列剩余待审计路径
-bash "<本SKILL目录>"/queue.sh status
+bash "<本SKILL目录>"/scripts/queue.sh status
 
 # 弹出一个待审计路径（同时提示报告输出目录）
-bash "<本SKILL目录>"/queue.sh pop
+bash "<本SKILL目录>"/scripts/queue.sh pop
 
 # 清理扫描队列（仅在审计完成时使用）
-bash "<本SKILL目录>"/queue.sh clean
+bash "<本SKILL目录>"/scripts/queue.sh clean
 ```
 
 ### Step3 执行队列脚本，逐个进行审计
@@ -116,8 +119,10 @@ bash "<本SKILL目录>"/queue.sh clean
 为 `Step4` 中识别出的每个敏感操作创建 **上下文分析子任务**，传递给子任务的信息包括：
 
 - 指示其加载任务描述 `<本SKILL目录>/threat-explore/agent.md`
-- 敏感操作相关必要描述（包括文件路径、行号范围、危害描述、代码片段等）
+- 敏感操作相关必要描述（包括文件路径、行号范围、相关描述、代码片段等）
 - 中间报告输出路径（创建多个子任务时，需要保证路径唯一，因此需要调整文件名最后的编号位）
+- 确认为无风险/误报的结果，不要输出报告到文件
+- 唯一允许的输出目录为 `<输出目录>/`, 输出文件到其他目录的行为是非法行为，如果需要临时目录，请在输出目录下创建
 
 ! 注意一个敏感操作对应创建一个子任务
 ! 如果敏感操作过多时，注意不要并发创建过多子任务，限制并发为3
@@ -127,8 +132,8 @@ bash "<本SKILL目录>"/queue.sh clean
 ### Step6 总结收尾
 
 1、为本次扫描任务输出一份审计总结，总结输出到 `<输出目录>/task_summary.md`
-2、使用 `bash "<本SKILL目录>"/merge_reports.sh <输出目录>` 合并审计总结和所有报告
-3、扫描队列清理: `bash "<本SKILL目录>"/queue.sh clean`
+2、使用 `bash "<本SKILL目录>"/scripts/merge_reports.sh <输出目录>` 合并审计总结和所有报告
+3、扫描队列清理: `bash "<本SKILL目录>"/scripts/queue.sh clean`
 
 ## 特别说明
 
